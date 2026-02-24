@@ -1,0 +1,1700 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>FORMENWETTER V2</title>
+<style>
+/* ══════════════════════════════════════════════
+   FORMENWETTER V2  —  Design System
+   Aesthetic: Organic Dark Matter / Bioluminescent
+   Font pair: Syne (display) + IBM Plex Mono (ui)
+   ══════════════════════════════════════════════*/
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg:        #080c0f;
+  --bg2:       #0d1318;
+  --surface:   #131b22;
+  --surface2:  #1a252f;
+  --border:    #243040;
+  --border2:   #2e3e50;
+  --text:      #c4d4e0;
+  --text2:     #6a8498;
+  --text3:     #3d5468;
+  --accent:    #38e8cc;
+  --accent-dim:#1a7060;
+  --gold:      #f0c060;
+  --gold-dim:  #705010;
+  --red:       #e05048;
+  --red-dim:   #602020;
+  --green:     #68d88c;
+  --purple:    #b080f0;
+  --font-d:    'Syne', sans-serif;
+  --font-ui:   'IBM Plex Mono', monospace;
+  --r:         4px;
+  --tap:       44px; /* min tap target */
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100dvh; overflow: hidden; touch-action: none; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── TOPBAR ── */
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-height: 48px;
+}
+#game-title { font-family: var(--font-d); font-size: 16px; font-weight: 800; color: var(--accent); letter-spacing: 0.15em; flex-shrink: 0; }
+.tb-sep { width: 1px; height: 20px; background: var(--border); flex-shrink: 0; }
+
+/* Energy display */
+#energy-wrap { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+#energy-icon { color: var(--gold); font-size: 13px; }
+#energy-val { font-size: 12px; color: var(--gold); min-width: 28px; }
+#energy-bar-outer { width: 64px; height: 5px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+#energy-bar { height: 100%; background: var(--gold); border-radius: 3px; transition: width 0.3s; }
+
+/* Global indices */
+.idx-mini { display: flex; align-items: center; gap: 4px; }
+.idx-mini-label { font-size: 10px; color: var(--text3); width: 14px; }
+.idx-mini-bar { width: 40px; height: 4px; background: var(--surface); border-radius: 2px; overflow: hidden; cursor: help; }
+.idx-mini-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+.fill-k { background: var(--red); }
+.fill-r { background: var(--green); }
+.fill-p { background: var(--purple); }
+
+/* Regime badge */
+#regime-badge {
+  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 3px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text2); transition: all 0.4s; flex-shrink: 0;
+}
+#regime-badge.desert { color: var(--red); border-color: var(--red-dim); background: rgba(224,80,72,0.08); }
+#regime-badge.eden   { color: var(--green); border-color: #305040; background: rgba(104,216,140,0.06); }
+
+/* Ctrl buttons */
+.tb-btn {
+  height: 30px; min-width: 36px; padding: 0 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text2); font-family: var(--font-ui); font-size: 11px;
+  border-radius: var(--r); cursor: pointer; transition: all 0.15s; flex-shrink: 0;
+}
+.tb-btn:hover { color: var(--text); border-color: var(--border2); }
+.tb-btn.active { color: var(--accent); border-color: var(--accent-dim); background: rgba(56,232,204,0.05); }
+.tb-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+#seed-copy-btn { font-size: 10px; }
+#tick-info { font-size: 10px; color: var(--text3); margin-left: auto; flex-shrink: 0; }
+
+/* ── MAIN AREA ── */
+#main { flex: 1; display: flex; overflow: hidden; }
+
+/* ── CANVAS WRAP ── */
+#canvas-wrap {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; position: relative; background: var(--bg);
+}
+canvas#world { display: block; cursor: crosshair; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; }
+
+/* Target marker overlay */
+#target-marker {
+  position: absolute; pointer-events: none;
+  width: 20px; height: 20px;
+  border: 2px solid var(--accent); border-radius: 3px;
+  box-shadow: 0 0 8px var(--accent);
+  display: none; transform: translate(-50%, -50%);
+  animation: targetPulse 1s ease-in-out infinite;
+}
+@keyframes targetPulse { 0%,100%{opacity:0.9;transform:translate(-50%,-50%) scale(1)} 50%{opacity:0.5;transform:translate(-50%,-50%) scale(1.1)} }
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: 200px; flex-shrink: 0;
+  background: var(--bg2); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.s-section { padding: 10px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.s-title { font-size: 9px; letter-spacing: 0.15em; color: var(--text3); text-transform: uppercase; margin-bottom: 8px; }
+
+/* ── ESSENCE BUTTONS ── */
+#palette { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+.ess-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text2); font-family: var(--font-ui); font-size: 9px;
+  padding: 6px 2px; border-radius: 3px; cursor: pointer;
+  text-align: center; transition: all 0.12s; min-height: 40px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.ess-btn:hover:not(.locked) { border-color: var(--border2); color: var(--text); }
+.ess-btn.selected { border-color: var(--accent); color: var(--accent); background: rgba(56,232,204,0.06); }
+.ess-btn.locked { opacity: 0.25; cursor: not-allowed; }
+.ess-sym { font-size: 15px; line-height: 1; }
+
+/* Slot display */
+#slot-display { display: flex; gap: 4px; margin-bottom: 6px; }
+.slot {
+  flex: 1; height: 28px; border: 1px solid var(--border);
+  border-radius: 3px; display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--text3); background: var(--surface);
+}
+.slot.filled { color: var(--text); border-color: var(--border2); }
+
+/* Mode selector */
+#mode-wrap { margin-bottom: 6px; }
+#mode-select {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text2); font-family: var(--font-ui); font-size: 10px;
+  padding: 5px 8px; border-radius: 3px; outline: none; cursor: pointer;
+}
+
+/* Apply button */
+#apply-btn {
+  width: 100%; height: 40px;
+  background: var(--accent-dim); border: 1px solid var(--accent);
+  color: var(--accent); font-family: var(--font-d); font-size: 13px; font-weight: 700;
+  border-radius: var(--r); cursor: pointer; transition: all 0.15s;
+  letter-spacing: 0.05em;
+}
+#apply-btn:hover:not(:disabled) { background: rgba(56,232,204,0.2); }
+#apply-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+#apply-cost { font-size: 10px; font-family: var(--font-ui); color: var(--gold); }
+
+/* ── GESTURE PANEL ── */
+.gest-btn-wrap { margin-bottom: 4px; position: relative; }
+.gest-btn {
+  width: 100%; min-height: 34px; padding: 6px 10px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text2); font-family: var(--font-ui); font-size: 10px;
+  border-radius: 3px; cursor: pointer; transition: all 0.12s;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.gest-btn:hover:not([disabled]) { border-color: var(--border2); color: var(--text); }
+.gest-btn.unlocked { border-color: var(--border2); color: var(--text); }
+.gest-btn[disabled] { opacity: 0.28; cursor: not-allowed; }
+.gest-cost { font-size: 9px; color: var(--gold-dim); }
+.gest-cd-bar {
+  position: absolute; bottom: 0; left: 0; height: 2px;
+  background: var(--accent); border-radius: 2px; transition: width 0.1s linear;
+  pointer-events: none;
+}
+
+/* ── ORBS DISPLAY ── */
+#orbs-panel { display: flex; gap: 6px; flex-wrap: wrap; }
+.orb-kind {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 3px; padding: 4px 8px; font-size: 10px;
+}
+.orb-dot { width: 8px; height: 8px; border-radius: 50%; }
+.orb-dot.impulse { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+.orb-dot.discovery { background: var(--gold); box-shadow: 0 0 4px var(--gold); }
+.orb-dot.resonance { background: var(--purple); box-shadow: 0 0 4px var(--purple); }
+
+/* ── FEED ── */
+#feed {
+  flex: 1; overflow-y: auto; padding: 8px 12px;
+  display: flex; flex-direction: column-reverse; gap: 3px;
+}
+.feed-msg { font-size: 11px; line-height: 1.4; animation: fadeSlide 0.4s ease; color: var(--text2); }
+.feed-msg.event   { color: var(--accent); font-size: 10px; }
+.feed-msg.unlock  { color: var(--gold); font-size: 10px; }
+.feed-msg.warn    { color: var(--red); font-size: 10px; }
+.feed-msg.eden    { color: var(--green); }
+@keyframes fadeSlide { from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none} }
+
+/* ── BOTTOMBAR ── */
+#bottombar {
+  background: var(--bg2); border-top: 1px solid var(--border);
+  padding: 8px 10px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 6px;
+}
+/* Micro goals */
+#micro-goal { flex: 1; font-size: 10px; color: var(--text3); font-style: italic; }
+#run-timer { font-size: 10px; color: var(--text3); }
+
+/* ── OVERLAY (Start / End) ── */
+#overlay {
+  position: absolute; inset: 0;
+  background: rgba(8,12,15,0.92);
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+  gap: 18px; z-index: 200; backdrop-filter: blur(4px);
+}
+.ov-title { font-family: var(--font-d); font-size: 36px; font-weight: 800; color: var(--accent); letter-spacing: 0.2em; }
+.ov-sub { font-family: var(--font-ui); font-size: 12px; color: var(--text2); max-width: 360px; text-align: center; line-height: 1.7; }
+.ov-seed-row { display: flex; gap: 8px; align-items: center; }
+.ov-seed-input {
+  background: var(--surface); border: 1px solid var(--border); color: var(--text);
+  font-family: var(--font-ui); font-size: 12px; padding: 8px 12px;
+  border-radius: var(--r); outline: none; width: 160px;
+}
+.ov-seed-input:focus { border-color: var(--accent-dim); }
+.ov-btn {
+  background: var(--accent-dim); border: 1px solid var(--accent); color: var(--accent);
+  font-family: var(--font-d); font-size: 13px; font-weight: 700; padding: 9px 28px;
+  border-radius: var(--r); cursor: pointer; letter-spacing: 0.1em; transition: all 0.2s;
+}
+.ov-btn:hover { background: rgba(56,232,204,0.18); }
+.ov-stat-row { display: flex; gap: 20px; }
+.ov-stat { text-align: center; }
+.ov-stat-val { font-family: var(--font-d); font-size: 24px; font-weight: 800; color: var(--accent); }
+.ov-stat-label { font-size: 9px; color: var(--text3); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+.ov-outcome-good { color: var(--green); }
+.ov-outcome-bad  { color: var(--red); }
+
+/* Tooltip */
+#tooltip {
+  position: fixed; background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--text); font-size: 11px; padding: 6px 10px; border-radius: var(--r);
+  pointer-events: none; z-index: 300; display: none; max-width: 200px; line-height: 1.5;
+}
+
+/* Toast */
+#toast {
+  position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+  background: var(--surface2); border: 1px solid var(--border2); color: var(--text);
+  font-size: 11px; padding: 6px 16px; border-radius: 20px;
+  pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 250;
+}
+#toast.show { opacity: 1; }
+
+/* Dormant overlay */
+#dormant-banner {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  background: rgba(8,12,15,0.9); border: 1px solid var(--gold-dim);
+  color: var(--gold); font-family: var(--font-d); font-size: 15px; font-weight: 700;
+  padding: 14px 28px; border-radius: var(--r); pointer-events: none;
+  display: none; text-align: center; z-index: 150;
+}
+#dormant-timer { font-size: 11px; color: var(--gold-dim); margin-top: 4px; }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ── TOPBAR ── -->
+<div id="topbar">
+  <span id="game-title">FORMENWETTER</span>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="btn-pause" onclick="G.togglePause()">⏸</button>
+  <button class="tb-btn active" id="btn-1x" onclick="G.setSpeed(1)">×1</button>
+  <button class="tb-btn" id="btn-3x" onclick="G.setSpeed(3)">×3</button>
+  <button class="tb-btn" onclick="G.reset()">↺</button>
+  <div class="tb-sep"></div>
+  <!-- Energy -->
+  <div id="energy-wrap" title="Energie — regeneriert langsam">
+    <span id="energy-icon">⚡</span>
+    <span id="energy-val">100</span>
+    <div id="energy-bar-outer"><div id="energy-bar" style="width:100%"></div></div>
+  </div>
+  <div class="tb-sep"></div>
+  <!-- Indices with tooltips -->
+  <div class="idx-mini" id="idx-K" data-tip="K — Klimastress: hoch = Desertifizierung droht">
+    <span class="idx-mini-label">K</span>
+    <div class="idx-mini-bar"><div class="idx-mini-fill fill-k" id="fill-K" style="width:5%"></div></div>
+  </div>
+  <div class="idx-mini" id="idx-R" data-tip="R — Resilienz: niedrig = System instabil">
+    <span class="idx-mini-label">R</span>
+    <div class="idx-mini-bar"><div class="idx-mini-fill fill-r" id="fill-R" style="width:80%"></div></div>
+  </div>
+  <div class="idx-mini" id="idx-P" data-tip="P — Druck: hoch = Überlastung + Stress">
+    <span class="idx-mini-label">P</span>
+    <div class="idx-mini-bar"><div class="idx-mini-fill fill-p" id="fill-P" style="width:10%"></div></div>
+  </div>
+  <div class="tb-sep"></div>
+  <span id="regime-badge">LAUFEND</span>
+  <button class="tb-btn" id="seed-copy-btn" onclick="G.copySeed()" title="Seed kopieren">🌱 Seed</button>
+  <span id="tick-info">Tick 0</span>
+</div>
+
+<!-- ── MAIN ── -->
+<div id="main">
+  <!-- Canvas -->
+  <div id="canvas-wrap">
+    <canvas id="world"></canvas>
+    <div id="target-marker"></div>
+    <div id="dormant-banner">
+      ⏳ DORMANT
+      <div id="dormant-timer">Die Welt erholt sich…</div>
+    </div>
+    <!-- Start/End Overlay -->
+    <div id="overlay">
+      <div class="ov-title">FORMENWETTER</div>
+      <div class="ov-sub">Forme eine Welt aus dem Nichts. Verbinde Essenzen, lenke Kolonien, verhindere die Verwüstung.</div>
+      <div class="ov-seed-row">
+        <input class="ov-seed-input" id="seed-input" type="text" value="formenwetter" placeholder="Seed…"/>
+        <button class="ov-btn" onclick="startGame()">STARTEN</button>
+      </div>
+    </div>
+    <div id="toast"></div>
+  </div>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <!-- Essenzen -->
+    <div class="s-section">
+      <div class="s-title">Essenzen</div>
+      <div id="slot-display">
+        <div class="slot" id="slot-A">A —</div>
+        <div class="slot" id="slot-B">B —</div>
+      </div>
+      <div id="palette"></div>
+    </div>
+
+    <!-- Modus + Apply -->
+    <div class="s-section">
+      <div class="s-title">Ritual</div>
+      <div id="mode-wrap">
+        <select id="mode-select">
+          <option value="Fusion">⚗ Fusion — Essenzen verbinden</option>
+          <option value="Symbiose" disabled>∞ Symbiose — Spannung lösen</option>
+          <option value="Dominanz" disabled>⚡ Dominanz — Konflikt</option>
+          <option value="Iteration" disabled>↻ Iteration — Mutation</option>
+        </select>
+      </div>
+      <button id="apply-btn" onclick="G.applyRitual()" disabled>
+        Anwenden <span id="apply-cost" style="display:block;font-size:9px">wähle Essenzen + Target</span>
+      </button>
+    </div>
+
+    <!-- Orbs -->
+    <div class="s-section">
+      <div class="s-title">Orbs</div>
+      <div id="orbs-panel">
+        <div class="orb-kind"><div class="orb-dot impulse"></div><span id="orb-i">0</span></div>
+        <div class="orb-kind"><div class="orb-dot discovery"></div><span id="orb-d">0</span></div>
+        <div class="orb-kind"><div class="orb-dot resonance"></div><span id="orb-r">0</span></div>
+      </div>
+    </div>
+
+    <!-- Feed -->
+    <div class="s-section" style="padding-bottom:6px">
+      <div class="s-title">Weltflüstern</div>
+    </div>
+    <div id="feed"></div>
+  </div>
+</div>
+
+<!-- ── BOTTOMBAR ── -->
+<div id="bottombar">
+  <span id="micro-goal">—</span>
+  <span id="run-timer">0:00</span>
+</div>
+
+<!-- Tooltip -->
+<div id="tooltip"></div>
+
+<script>
+'use strict';
+// ══════════════════════════════════════════════════════════════════════
+// FORMENWETTER V2  —  Full MVP Implementation
+//
+// Modules (hard boundaries, no cross-coupling):
+//   M00  TRUTH FILES (embedded schemas)
+//   M01  RNG (3 deterministic streams)
+//   M02  PARAMETERS (from 15_Parameter_Sheet)
+//   M03  WORLD STATE (flat TypedArrays)
+//   M04  WORLD GENERATION (seeded, 16_Worldgen_Spec)
+//   M05  SIM TICK (verbindliche Pipeline, 19.5)
+//   M06  TERRAIN TILE RENDERER (V2: terrainId + tile variants)
+//   M07  COLONY RENDERER (density→stipple→solid, front pulse)
+//   M08  EFFECTS RENDERER (orbs, particles, ripple — capped)
+//   M09  ORBS ENGINE (spawn/collect/caps, no timer income)
+//   M10  STABILITY PACKAGE (firstSpawn gate, dormant, start-boost)
+//   M11  RUN GOALS (Eden/Extinction/Desert — clean endings)
+//   M12  MICRO GOALS (run-internal nudges, no quest structure)
+//   M13  UI CONTROLLER (target, cost preview, disabled states)
+//   M14  FEED / WHISPER
+// ══════════════════════════════════════════════════════════════════════
+
+/* ─────────────────────────────────────────────────
+   M00  TRUTH FILES  (embedded — SCHEMAS/ equivalent)
+   Single source of truth for IDs / policies / labels
+   ─────────────────────────────────────────────────*/
+
+// terrain_palette.v0
+const TERRAIN_PALETTE = {
+  dirt:   { name:'Erde',       rgb:[0.15,0.11,0.08], capBias:0,    moistBias:0,     nutBias:0,    oreBarrier:0,   stressDamp:0   },
+  clay:   { name:'Ton',        rgb:[0.22,0.16,0.12], capBias:0.05, moistBias:0.08,  nutBias:0.05, oreBarrier:0,   stressDamp:0.05},
+  sand:   { name:'Sand',       rgb:[0.30,0.24,0.14], capBias:-0.10,moistBias:-0.12, nutBias:-0.08,oreBarrier:0,   stressDamp:-0.05},
+  stone:  { name:'Stein',      rgb:[0.20,0.20,0.22], capBias:-0.05,moistBias:-0.05, nutBias:-0.10,oreBarrier:0.15,stressDamp:0.08},
+  ore:    { name:'Erz',        rgb:[0.25,0.22,0.35], capBias:-0.15,moistBias:-0.08, nutBias:-0.12,oreBarrier:0.30,stressDamp:0.10},
+  rich:   { name:'Fruchtbar',  rgb:[0.12,0.18,0.10], capBias:0.15, moistBias:0.10,  nutBias:0.18, oreBarrier:0,   stressDamp:0.05},
+};
+const TERRAIN_IDS = Object.keys(TERRAIN_PALETTE);
+
+// orbs.v0
+const ORBS_SCHEMA = {
+  kinds: {
+    impulse:   { value: 4,  ttl: 8000,  radius: 2, color: [0.22,0.9,0.8]  },
+    discovery: { value: 15, ttl: 20000, radius: 3, color: [0.94,0.75,0.25]},
+    resonance: { value: 8,  ttl: 14000, radius: 2, color: [0.69,0.50,0.94]},
+  },
+  triggers: {
+    RitualApplied: { kind:'impulse',   amount:1, scatter:2 },
+    SpeciesSpawned:{ kind:'impulse',   amount:2, scatter:3 },
+    UnlockEarned:  { kind:'discovery', amount:1, scatter:1 },
+    HybridSpawned: { kind:'discovery', amount:2, scatter:2 },
+    StableState:   { kind:'resonance', amount:1, scatter:2 },
+  },
+  caps: { maxOnMap: 64, maxPerCell: 3 },
+  overflowPolicy: 'dropNewest', // FIXED
+};
+
+// ui_strings.de-DE.v0
+const STRINGS = {
+  title:            'FORMENWETTER',
+  regime_normal:    'LAUFEND',
+  regime_desert:    'DESERTIFIZIERUNG',
+  regime_eden:      'EDEN',
+  ended_extinct:    'AUSGESTORBEN',
+  ended_desert:     'VERWÜSTET',
+  ended_eden:       'EDEN ERREICHT',
+  toast_fusion:     'Ritual: Fusion',
+  toast_symbiose:   'Ritual: Symbiose',
+  toast_dominanz:   'Ritual: Dominanz',
+  toast_iteration:  'Ritual: Iteration',
+  toast_no_target:  'Target setzen — auf die Welt tippen',
+  toast_no_essenzen:'Wähle 2 Essenzen',
+  toast_no_energy:  'Nicht genug Energie',
+  toast_no_unlock:  'Noch nicht freigeschaltet',
+  toast_too_dry:    'Zu trocken für Keimung',
+  unlock_symbiose:  'Ein neues Ritual zeichnet sich ab. [Symbiose]',
+  unlock_dominanz:  'Konflikt eskaliert. [Dominanz freigeschaltet]',
+  unlock_iteration: 'Mutation erkannt. [Iteration freigeschaltet]',
+  dormant_msg:      'Die Welt erholt sich…',
+  feed_start:       'Die Welt schweigt. Wähle Atem + Frost → Fusion.',
+  feed_rain:        'Ein Regenimpuls durchzieht die Erde.',
+  feed_keim_dry:    'Zu trocken für Keimung. Feuchte fehlt.',
+  feed_hybrid:      'Ein Hybrid entsteht — neue Signatur.',
+  feed_desert:      'Die Welt kippt. Desertifizierung beginnt.',
+  feed_recovery:    'Der Regen kehrt zurück.',
+  feed_eden:        'Stabiler Zustand. Die Welt atmet.',
+  feed_extinct:     'Alle Kolonien erloschen.',
+  tip_K:            'K — Klimastress. >0.75 = Desertifizierung droht.',
+  tip_R:            'R — Resilienz. <0.35 = System instabil.',
+  tip_P:            'P — Druck. >0.60 = Überlastung + Stress.',
+};
+
+// ── Essenzen (aus 02) ──
+const ESSENZEN = [
+  { id:'Atem',    sym:'~',  col:'#90cff7', delta:[0.25, 0.05,-0.10, 0.25, 0.10] },
+  { id:'Frost',   sym:'❄',  col:'#a0d8ef', delta:[-0.20, 0.05, 0.25,-0.05,-0.20] },
+  { id:'Glut',    sym:'🔥', col:'#f07040', delta:[0.20,-0.10,-0.15, 0.05, 0.25] },
+  { id:'Glanz',   sym:'✦',  col:'#ffe566', delta:[0.10, 0.25, 0.00,-0.05,-0.10] },
+  { id:'Feuchte', sym:'💧', col:'#5ba3d0', delta:[0.10, 0.15, 0.10, 0.05, 0.05] },
+  { id:'Boden',   sym:'⬡',  col:'#9c7a55', delta:[0.00, 0.20, 0.20,-0.10,-0.10] },
+  { id:'Erz',     sym:'◆',  col:'#9888cc', delta:[-0.15,-0.05, 0.30,-0.05,-0.10] },
+  { id:'Keim',    sym:'🌱', col:'#70d060', delta:[0.20, 0.00, 0.00, 0.00, 0.05] },
+  { id:'Drift',   sym:'≋',  col:'#c090e0', delta:[0.05,-0.15,-0.15, 0.05, 0.35] },
+  { id:'Band',    sym:'∞',  col:'#80d0b0', delta:[0.05, 0.10, 0.15, 0.25, 0.05] },
+  { id:'Biss',    sym:'⚡', col:'#f0b050', delta:[0.15,-0.10, 0.05, 0.30, 0.05] },
+  { id:'Hülle',   sym:'○',  col:'#b0b0c8', delta:[-0.15,-0.10, 0.35,-0.05,-0.15] },
+];
+
+// ── Gattungen ──
+const GATTUNGEN = {
+  Flora:        { base:[0.45,0.70,0.60,0.25,0.25], hue:[0.35,0.65,0.25], modes:['Kompakt','Welle','Flecken'] },
+  Fauna:        { base:[0.65,0.40,0.45,0.70,0.45], hue:[0.60,0.35,0.20], modes:['Front','Fäden','Flecken']  },
+  Cognita:      { base:[0.50,0.55,0.50,0.75,0.65], hue:[0.45,0.50,0.70], modes:['Fäden','Kompakt','Front'] },
+  Extremophile: { base:[0.30,0.35,0.80,0.20,0.20], hue:[0.20,0.40,0.55], modes:['Panzer','Kompakt','Flecken']},
+};
+
+/* ─────────────────────────────────────────────────
+   M01  RNG  — 3 deterministic streams, no Math.random in sim
+   ─────────────────────────────────────────────────*/
+const RNG = (() => {
+  // djb2 string hash
+  const hashStr = s => { let h=5381; for(let i=0;i<s.length;i++) h=(((h<<5)+h)+s.charCodeAt(i))>>>0; return h>>>0; };
+  // Mulberry32 PRNG
+  const mkPRNG = seed => { let s=seed>>>0; return ()=>{ s+=0x6D2B79F5; let t=s; t=Math.imul(t^(t>>>15),t|1); t^=t+Math.imul(t^(t>>>7),t|61); return ((t^(t>>>14))>>>0)/4294967296; }; };
+  // Hash-based rare event (no stream consumption)
+  const hash32 = (a,b,c) => { let h=(a*2654435761^b*2246822519^c*3266489917)>>>0; h=(h^(h>>>16))>>>0; h=Math.imul(h,0x45d9f3b)>>>0; return (h^(h>>>16))>>>0 / 4294967296; };
+
+  let W, Sim, Cos, seedHash;
+  const init = seed => { seedHash=hashStr(seed); W=mkPRNG(seedHash); Sim=mkPRNG(seedHash^0xDEADBEEF); Cos=mkPRNG(seedHash^0xCAFEBABE); };
+  return { init, world:()=>W(), sim:()=>Sim(), cos:()=>Cos(), hash32, getSeedHash:()=>seedHash };
+})();
+
+/* ─────────────────────────────────────────────────
+   M02  PARAMETERS  (from 15_Parameter_Sheet — single source)
+   ─────────────────────────────────────────────────*/
+const P = {
+  TICK_RATE: 10, RANDOM_CELLS: 180, RANDOM_FRONT: 70, GLOBAL_EVERY: 10,
+  W: 128, H: 128,
+  // Layer
+  M_DIFFUSE:0.06, M_EVAP:0.004, M_POR:0.7,
+  L_ZONES:5, L_ZONE_R:28,
+  N_CONSUME:0.010, N_REGEN:0.0025, N_REGEN_EMPTY:0.0035, N_DRIFT:0.03,
+  S_OD:0.020, S_SC:0.015, S_FRONT:0.020, S_DECAY:0.006,
+  RZ_BUILD:0.010, RZ_DECAY:0.006,
+  // Cap
+  CAP_BASE:0.35, CAP_M:0.30, CAP_N:0.35, CAP_L:0.10, CAP_S:0.25, CAP_RZ:0.30, CAP_E:0.20,
+  // Colony
+  GROW_BASE:0.22, GROW_PREF:0.20, DECAY_BASE:0.020, DECAY_AGE:0.015,
+  // Counters
+  T_BUILD:0.030, T_DECAY:0.010, P_BUILD:0.020, PL_BUILD:0.018, PL_DECAY:0.010,
+  // Hybrid
+  HYB_WINDOW_S:10,
+  // Desert triggers
+  K_TRIG:0.75, R_TRIG:0.35, P_TRIG:0.60, D_WINDOW_S:45,
+  K_REL:0.55, R_REL:0.45,
+  // Player
+  E_MAX:100, E_REGEN_PER10S:6, COST_BASE:18, COST_DOM:6, COST_ITER:10,
+  CD_FUSION:2000, CD_SYM:6000, CD_DOM:8000, CD_ITER:12000,
+  // Stability (M10)
+  DORMANT_S:10, START_BOOST_S:30,
+  // Extinction
+  EXTINCT_S:15, DESERT_END_S:30,
+  // Eden
+  EDEN_S:120,
+  // Economy
+  DROP_R:2,
+};
+
+/* ─────────────────────────────────────────────────
+   M03  WORLD STATE  (flat TypedArrays, no objects in hot path)
+   ─────────────────────────────────────────────────*/
+class WorldState {
+  constructor() {
+    const n = P.W * P.H;
+    // Layers
+    this.M=new Float32Array(n); this.L=new Float32Array(n);
+    this.N=new Float32Array(n); this.E=new Float32Array(n);
+    this.S=new Float32Array(n); this.Rz=new Float32Array(n);
+    this.por=new Float32Array(n);
+    // TerrainId (V2) — one terrainId per cell, indices into TERRAIN_IDS
+    this.terrainId=new Uint8Array(n);
+    // Colony
+    this.speciesId=new Int16Array(n).fill(-1);
+    this.density=new Float32Array(n);
+    this.age=new Uint16Array(n);
+    // Counters
+    this.T=new Float32Array(n); this.Pr=new Float32Array(n); this.Pl=new Float32Array(n);
+    // Front cache
+    this.isFront=new Uint8Array(n);
+    // Species registry
+    this.species=[]; // max 32
+    // Global indices
+    this.K=0.05; this.R=0.80; this.Pg=0.10;
+    // Regime
+    this.regime='NORMAL'; this.desW=0; this.relW=0;
+    // Player
+    this.energy=P.E_MAX; this.eAccum=0;
+    // Unlocks
+    this.unlocks={Fusion:true,Symbiose:false,Dominanz:false,Iteration:false};
+    this.coexistT=0; this.conflictT=0;
+    // Run state
+    this.runState='RUNNING';
+    this.extinctW=0; this.desertEndW=0; this.edenW=0;
+    // Stability (M10)
+    this.hasEverSpawned=false; this.dormantTimer=0; this.startBoostRem=0;
+    this.freeKeim=false;
+    // Run timer
+    this.tick=0; this.startTs=Date.now();
+    // Action queue (bounded 32, FIFO, dropNewest overflow)
+    this.actions=[]; this.maxActions=32;
+    // Hybrid window
+    this.hybWin=0;
+    // Mods (regime multipliers)
+    this.mods={};
+    // Eden reported
+    this._edenReported=false;
+    // Target
+    this.targetX=-1; this.targetY=-1;
+  }
+  idx(x,y){ return y*P.W+x; }
+  c01(v)  { return v<0?0:v>1?1:v; }
+  pushAction(a) {
+    if (this.actions.length >= this.maxActions) return; // dropNewest
+    this.actions.push(a);
+  }
+  addSpecies(rec) {
+    if (this.species.length >= 32) return -1;
+    this.species.push(rec); return this.species.length-1;
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   M04  WORLD GENERATION  (seeded, spec 16)
+   ─────────────────────────────────────────────────*/
+function generateWorld(ws) {
+  const {W,H} = P;
+  // Nährstoff: blob scatter (16.3)
+  for (let b=0;b<18;b++) {
+    const cx=Math.floor(RNG.world()*W), cy=Math.floor(RNG.world()*H);
+    const r=10+Math.floor(RNG.world()*26), s=0.4+RNG.world()*0.6;
+    for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+      const d2=(x-cx)**2+(y-cy)**2;
+      ws.N[ws.idx(x,y)] += s*Math.exp(-d2/(r*r*0.5));
+    }
+  }
+  const Nt=new Float32Array(W*H);
+  for (let y=1;y<H-1;y++) for (let x=1;x<W-1;x++) {
+    Nt[ws.idx(x,y)]=(ws.N[ws.idx(x,y)]*4+ws.N[ws.idx(x-1,y)]+ws.N[ws.idx(x+1,y)]+ws.N[ws.idx(x,y-1)]+ws.N[ws.idx(x,y+1)])/8;
+  }
+  for (let i=0;i<W*H;i++) ws.N[i]=Math.min(1,Nt[i]||ws.N[i]);
+
+  // Erz: worm walk (16.4)
+  for (let v=0;v<7;v++) {
+    let x=Math.floor(RNG.world()*W), y=Math.floor(RNG.world()*H), ang=RNG.world()*Math.PI*2;
+    for (let s=0,steps=400+Math.floor(RNG.world()*500);s<steps;s++) {
+      ang+=(RNG.world()-0.5)*0.4; x=((x+Math.round(Math.cos(ang))+W)%W); y=((y+Math.round(Math.sin(ang))+H)%H);
+      ws.E[ws.idx(x,y)]=Math.min(1,ws.E[ws.idx(x,y)]+0.7+RNG.world()*0.3);
+      if(x+1<W) ws.E[ws.idx(x+1,y)]=Math.min(1,ws.E[ws.idx(x+1,y)]+0.4);
+    }
+  }
+
+  // Licht: soft zones (16.5)
+  for (let z=0;z<P.L_ZONES;z++) {
+    const cx=Math.floor(RNG.world()*W), cy=Math.floor(RNG.world()*H), r=P.L_ZONE_R+Math.floor(RNG.world()*20);
+    for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+      const t=1-Math.min(1,Math.sqrt((x-cx)**2+(y-cy)**2)/r);
+      ws.L[ws.idx(x,y)]=Math.min(1,ws.L[ws.idx(x,y)]+t*t*0.7);
+    }
+  }
+
+  // Porosität + Startwerte (16.6, 16.7)
+  for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+    const i=ws.idx(x,y);
+    ws.por[i]=RNG.hash32(RNG.getSeedHash(),x*13+y*7,99);
+    ws.M[i]=0.02+RNG.world()*0.04+ws.por[i]*0.01;
+    ws.S[i]=RNG.world()<0.08?RNG.world()*0.06:0;
+  }
+
+  // TerrainId (V2) — assign from E/N/por (deterministic)
+  for (let y=0;y<H;y++) for (let x=0;x<W;x++) {
+    const i=ws.idx(x,y);
+    const e=ws.E[i], n=ws.N[i], p=ws.por[i];
+    let tid;
+    if      (e>0.6)          tid=TERRAIN_IDS.indexOf('ore');
+    else if (e>0.3)          tid=TERRAIN_IDS.indexOf('stone');
+    else if (n>0.7)          tid=TERRAIN_IDS.indexOf('rich');
+    else if (n>0.4)          tid=TERRAIN_IDS.indexOf('clay');
+    else if (p>0.75)         tid=TERRAIN_IDS.indexOf('sand');
+    else                     tid=TERRAIN_IDS.indexOf('dirt');
+    ws.terrainId[i]=tid;
+  }
+}
+
+/* ─────────────────────────────────────────────────
+   M05  SIM TICK  (verbindliche Pipeline 19.5)
+   No Math.random / Date.now. RNG.sim() only.
+   ─────────────────────────────────────────────────*/
+const SIM = (() => {
+  const NX=[1,-1,0,0], NY=[0,0,1,-1];
+
+  function cellCap(ws,i,mods) {
+    const terra=TERRAIN_PALETTE[TERRAIN_IDS[ws.terrainId[i]]];
+    const cb=terra.capBias||0, mb=terra.moistBias||0, nb=terra.nutBias||0;
+    const c=P.CAP_BASE+cb+(ws.M[i]+mb)*P.CAP_M+(ws.N[i]+nb)*P.CAP_N
+            +ws.L[i]*P.CAP_L-ws.S[i]*P.CAP_S-ws.Rz[i]*P.CAP_RZ-(ws.E[i]+terra.oreBarrier)*P.CAP_E;
+    return Math.max(0.04, Math.min(1, c*(mods.capMul||1)));
+  }
+
+  function tick(ws) {
+    if (ws.runState!=='RUNNING') return;
+    ws.tick++;
+    // 1) applyActions
+    applyActions(ws);
+    // 2) randomTickLayerUpdates
+    layerUpdates(ws);
+    // 3) randomTickColonyUpdates
+    colonyUpdates(ws);
+    // 4) updateFrontCounters
+    frontCounters(ws);
+    // 5) computeGlobalIndices every GLOBAL_EVERY
+    if (ws.tick%P.GLOBAL_EVERY===0) globalIndices(ws);
+    // 6) updateRegimeWindow
+    regimeWindow(ws);
+    // 7) emitSimEvents
+    emitEvents(ws);
+    // Energy regen
+    ws.eAccum++;
+    if (ws.eAccum>=P.TICK_RATE*10) { ws.eAccum=0; ws.energy=Math.min(P.E_MAX,ws.energy+P.E_REGEN_PER10S); }
+    // Start boost countdown
+    if (ws.startBoostRem>0) ws.startBoostRem--;
+    // Dormant countdown
+    if (ws.dormantTimer>0) ws.dormantTimer--;
+  }
+
+  // ── 1) Actions ──
+  function applyActions(ws) {
+    while (ws.actions.length>0) {
+      const a=ws.actions.shift();
+      if      (a.type==='FUSION')    doFusion(ws,a);
+      else if (a.type==='SYMBIOSE')  doSymbiose(ws,a);
+      else if (a.type==='DOMINANZ')  doDominanz(ws,a);
+      else if (a.type==='ITERATION') doIteration(ws,a);
+    }
+  }
+
+  function doFusion(ws,a) {
+    const {x,y,essenzen}=a;
+    const e1=ESSENZEN.find(e=>e.id===essenzen[0]), e2=ESSENZEN.find(e=>e.id===essenzen[1]);
+    if (!e1||!e2) return;
+    const r=P.DROP_R;
+    for (let dy=-r;dy<=r;dy++) for (let dx=-r;dx<=r;dx++) {
+      const i=ws.idx(((x+dx+P.W)%P.W),((y+dy+P.H)%P.H));
+      applyEssLayer(ws,i,e1,0.14); applyEssLayer(ws,i,e2,0.14);
+    }
+    // Atem+Frost → Regen
+    if (essenzen.includes('Atem')&&essenzen.includes('Frost')) {
+      for (let dy=-10;dy<=10;dy++) for (let dx=-10;dx<=10;dx++) {
+        const d=Math.sqrt(dx*dx+dy*dy); if(d>10) continue;
+        const i=ws.idx(((x+dx+P.W)%P.W),((y+dy+P.H)%P.H));
+        ws.M[i]=ws.c01(ws.M[i]+0.18*(1-d/10));
+      }
+      addFeed(STRINGS.feed_rain,'event');
+      EVENTS.push({type:'RippleAt',x,y});
+      EVENTS.push({type:'OrbSpawn',orbKind:'impulse',x,y,amount:ORBS_SCHEMA.triggers.RitualApplied.amount+1});
+    }
+    // Keim spawn check
+    if (essenzen.includes('Keim')) {
+      const i=ws.idx(x,y);
+      if (ws.M[i]>0.12||(ws.freeKeim&&ws.hasEverSpawned)) {
+        spawnSpecies(ws,x,y,[e1,e2]);
+        ws.freeKeim=false;
+      } else addFeed(STRINGS.feed_keim_dry,'event');
+    }
+    EVENTS.push({type:'OrbSpawn',orbKind:'impulse',x,y,amount:ORBS_SCHEMA.triggers.RitualApplied.amount});
+    EVENTS.push({type:'Toast',msg:STRINGS.toast_fusion});
+  }
+
+  function applyEssLayer(ws,i,ess,s) {
+    if (ess.id==='Feuchte') ws.M[i]=ws.c01(ws.M[i]+s);
+    if (ess.id==='Glanz')   ws.L[i]=ws.c01(ws.L[i]+s*0.5);
+    if (ess.id==='Boden')   ws.N[i]=ws.c01(ws.N[i]+s*0.8);
+    if (ess.id==='Frost')   ws.M[i]=ws.c01(ws.M[i]+s*0.25);
+    if (ess.id==='Glut')    ws.S[i]=ws.c01(ws.S[i]+s*0.4);
+    if (ess.id==='Erz')     ws.E[i]=ws.c01(ws.E[i]+s*0.5);
+    if (ess.id==='Atem')    ws.S[i]=ws.c01(ws.S[i]-s*0.5);
+    if (ess.id==='Biss')    ws.T[i]=ws.c01(ws.T[i]+s*0.6);
+    if (ess.id==='Band')    ws.Pl[i]=ws.c01(ws.Pl[i]+s*0.4);
+    if (ess.id==='Hülle')   ws.Rz[i]=ws.c01(ws.Rz[i]-s*0.3);
+    if (ess.id==='Drift')   ws.Pl[i]=ws.c01(ws.Pl[i]+s*0.3);
+  }
+
+  function spawnSpecies(ws,x,y,essenzen) {
+    const ids=essenzen.map(e=>e.id);
+    let gattung='Flora';
+    if (ids.includes('Biss')||ids.includes('Drift')) gattung='Fauna';
+    else if (ids.includes('Band')||ids.includes('Atem')) {
+      if (ws.species.length>0) gattung=(RNG.hash32(ws.tick,x,y)<0.45)?'Cognita':'Flora';
+    }
+    if ((ids.includes('Hülle')&&ids.includes('Erz'))||(ids.includes('Frost')&&ids.includes('Erz'))) gattung='Extremophile';
+    const gt=GATTUNGEN[gattung];
+    const dims=[...gt.base];
+    essenzen.forEach(ess=>ess.delta.forEach((d,j)=>dims[j]=ws.c01(dims[j]+d*0.3)));
+    const ec=essenzen[0].col;
+    const er=parseInt(ec.slice(1,3),16)/255, eg=parseInt(ec.slice(3,5),16)/255, eb=parseInt(ec.slice(5,7),16)/255;
+    const color=[gt.hue[0]*0.55+er*0.45, gt.hue[1]*0.55+eg*0.45, gt.hue[2]*0.55+eb*0.45];
+    const mode=gt.modes[Math.floor(RNG.hash32(RNG.getSeedHash(),x,y)*gt.modes.length)];
+    const sid=ws.addSpecies({gattung,dims,mode,color,essenzen:ids,expand:0,birthTick:ws.tick,isHybrid:false});
+    if (sid<0) { addFeed('Speziesregister voll.','event'); return; }
+    const rng=P.DROP_R;
+    for (let dy=-rng;dy<=rng;dy++) for (let dx=-rng;dx<=rng;dx++) {
+      if (RNG.hash32(sid,dx+8,dy+8)>0.55) continue;
+      const i=ws.idx(((x+dx+P.W)%P.W),((y+dy+P.H)%P.H));
+      if (ws.speciesId[i]<0) { ws.speciesId[i]=sid; ws.density[i]=0.12+RNG.hash32(sid,i,0)*0.15; ws.age[i]=0; }
+    }
+    // Start boost (M10)
+    ws.startBoostRem=P.START_BOOST_S*P.TICK_RATE;
+    ws.hasEverSpawned=true;
+    addFeed(`${gattung} (${mode}) erwacht — ${ids.join('+')}`, 'event');
+    EVENTS.push({type:'OrbSpawn',orbKind:'impulse',x,y,amount:ORBS_SCHEMA.triggers.SpeciesSpawned.amount});
+    EVENTS.push({type:'POP',x,y});
+    checkUnlock(ws,false);
+  }
+
+  function doSymbiose(ws,a) {
+    const r=6;
+    for (let dy=-r;dy<=r;dy++) for (let dx=-r;dx<=r;dx++) {
+      const i=ws.idx(((a.x+dx+P.W)%P.W),((a.y+dy+P.H)%P.H));
+      ws.T[i]=ws.c01(ws.T[i]-0.18); ws.S[i]=ws.c01(ws.S[i]-0.06); ws.Pl[i]=ws.c01(ws.Pl[i]+0.06);
+    }
+    EVENTS.push({type:'RippleAt',x:a.x,y:a.y});
+    EVENTS.push({type:'OrbSpawn',orbKind:'impulse',x:a.x,y:a.y,amount:1});
+    EVENTS.push({type:'Toast',msg:STRINGS.toast_symbiose});
+  }
+
+  function doDominanz(ws,a) {
+    const r=4;
+    for (let dy=-r;dy<=r;dy++) for (let dx=-r;dx<=r;dx++) {
+      const i=ws.idx(((a.x+dx+P.W)%P.W),((a.y+dy+P.H)%P.H));
+      ws.T[i]=ws.c01(ws.T[i]+0.28); ws.S[i]=ws.c01(ws.S[i]+0.10);
+    }
+    EVENTS.push({type:'RippleAt',x:a.x,y:a.y,col:'#e05048'});
+    EVENTS.push({type:'OrbSpawn',orbKind:'impulse',x:a.x,y:a.y,amount:1});
+    EVENTS.push({type:'Toast',msg:STRINGS.toast_dominanz});
+  }
+
+  function doIteration(ws,a) {
+    const r=5;
+    for (let dy=-r;dy<=r;dy++) for (let dx=-r;dx<=r;dx++) {
+      const i=ws.idx(((a.x+dx+P.W)%P.W),((a.y+dy+P.H)%P.H));
+      ws.Pl[i]=ws.c01(ws.Pl[i]+0.22);
+    }
+    EVENTS.push({type:'RippleAt',x:a.x,y:a.y,col:'#b080f0'});
+    EVENTS.push({type:'OrbSpawn',orbKind:'impulse',x:a.x,y:a.y,amount:1});
+    EVENTS.push({type:'Toast',msg:STRINGS.toast_iteration});
+  }
+
+  // ── 2) Layer Updates ──
+  function layerUpdates(ws) {
+    const mods=ws.mods;
+    for (let a=0;a<P.RANDOM_CELLS;a++) {
+      const i=Math.floor(RNG.sim()*P.W*P.H);
+      const x=i%P.W, y=Math.floor(i/P.W);
+      const mEvap=P.M_EVAP*(mods.mEvap||1), mDiff=P.M_DIFFUSE*(mods.mDiff||1);
+      const nRegen=P.N_REGEN*(mods.nRegen||1), sDecay=P.S_DECAY*(mods.sDecay||1);
+      // M evap + diffuse
+      ws.M[i]=ws.c01(ws.M[i]-mEvap*(1+ws.por[i]*P.M_POR));
+      let mAvg=0,cnt=0;
+      for (let n=0;n<4;n++) { const nx=x+NX[n],ny=y+NY[n]; if(nx>=0&&nx<P.W&&ny>=0&&ny<P.H){mAvg+=ws.M[ws.idx(nx,ny)];cnt++;} }
+      if(cnt) ws.M[i]=ws.c01(ws.M[i]+mDiff*((mAvg/cnt)-ws.M[i])*0.5);
+      // N consume + regen
+      const d=ws.density[i];
+      ws.N[i]=ws.c01(ws.N[i]-d*P.N_CONSUME);
+      ws.N[i]=ws.c01(ws.N[i]+nRegen+(d<0.05?P.N_REGEN_EMPTY:0));
+      // Stress
+      const boost=ws.startBoostRem>0?0.5:1;
+      const cp=cellCap(ws,i,mods);
+      if(d>cp*0.85) ws.S[i]=ws.c01(ws.S[i]+P.S_OD*boost);
+      if(ws.N[i]<0.15) ws.S[i]=ws.c01(ws.S[i]+P.S_SC*boost);
+      ws.S[i]=ws.c01(ws.S[i]-sDecay);
+      // Rz
+      if(ws.speciesId[i]>=0) ws.Rz[i]=ws.c01(ws.Rz[i]+P.RZ_BUILD);
+      else ws.Rz[i]=ws.c01(ws.Rz[i]-P.RZ_DECAY);
+    }
+  }
+
+  // ── 3) Colony Updates ──
+  function colonyUpdates(ws) {
+    updateFrontCache(ws);
+    const mods=ws.mods;
+    const growBoost=ws.startBoostRem>0?1.25:1;
+    for (let a=0;a<P.RANDOM_FRONT;a++) {
+      const i=Math.floor(RNG.sim()*P.W*P.H);
+      const sid=ws.speciesId[i]; if(sid<0) continue;
+      const sp=ws.species[sid]; if(!sp) continue;
+      const x=i%P.W, y=Math.floor(i/P.W);
+      const cp=cellCap(ws,i,mods);
+      // Decay
+      const dr=P.DECAY_BASE+(ws.S[i]>0.5?0.01:0)+(ws.age[i]>220?P.DECAY_AGE:0);
+      ws.density[i]=Math.max(0,ws.density[i]-dr*0.5);
+      ws.age[i]++;
+      if(ws.density[i]<=0){ws.speciesId[i]=-1;ws.density[i]=0;continue;}
+      // Growth at front
+      if(!ws.isFront[i]) continue;
+      const [W_,E_,Rb,,Wd]=sp.dims;
+      const expand=Math.max(0,0.55*W_+0.25*E_-0.20*ws.S[i]-0.15*ws.Rz[i])*growBoost;
+      sp.expand=expand;
+      // Shuffle dirs deterministically
+      const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
+      for(let k=3;k>0;k--){const j=Math.floor(RNG.sim()*(k+1));[dirs[k],dirs[j]]=[dirs[j],dirs[k]];}
+      for (const [dx,dy] of dirs) {
+        const nx=((x+dx+P.W)%P.W),ny=((y+dy+P.H)%P.H),ni=ws.idx(nx,ny);
+        if(ws.speciesId[ni]>=0) continue;
+        let ch=P.GROW_BASE*expand;
+        if(ws.M[ni]>0.4) ch+=P.GROW_PREF*0.5;
+        if(ws.N[ni]>0.35) ch+=P.GROW_PREF*0.5;
+        if(ws.L[ni]>0.4) ch+=P.GROW_PREF*0.25;
+        if(ws.E[ni]>0.6) ch-=0.12;
+        if(RNG.sim()<ch&&ws.density[i]>0.18){
+          ws.speciesId[ni]=sid; ws.density[ni]=ws.density[i]*0.55; ws.age[ni]=0; break;
+        }
+      }
+    }
+  }
+
+  function updateFrontCache(ws) {
+    ws.isFront.fill(0);
+    for (let y=0;y<P.H;y++) for (let x=0;x<P.W;x++) {
+      const i=ws.idx(x,y); if(ws.speciesId[i]<0) continue;
+      for (let n=0;n<4;n++) {
+        const nx=x+NX[n],ny=y+NY[n];
+        if(nx<0||nx>=P.W||ny<0||ny>=P.H) continue;
+        if(ws.speciesId[ws.idx(nx,ny)]!==ws.speciesId[i]){ws.isFront[i]=1;break;}
+      }
+    }
+  }
+
+  // ── 4) Front Counters + Hybrid ──
+  function frontCounters(ws) {
+    for (let a=0;a<P.RANDOM_FRONT;a++) {
+      const i=Math.floor(RNG.sim()*P.W*P.H);
+      if(!ws.isFront[i]){ws.T[i]=ws.c01(ws.T[i]-P.T_DECAY*2);ws.Pr[i]=ws.c01(ws.Pr[i]-0.01);continue;}
+      ws.T[i]=ws.c01(ws.T[i]+P.T_BUILD);
+      ws.S[i]=ws.c01(ws.S[i]+P.S_FRONT*0.5);
+      const cp=cellCap(ws,i,ws.mods);
+      if(ws.density[i]>cp*0.85) ws.Pr[i]=ws.c01(ws.Pr[i]+P.P_BUILD);
+      if(ws.N[i]<0.15) ws.Pr[i]=ws.c01(ws.Pr[i]+P.P_BUILD);
+      ws.Pr[i]=ws.c01(ws.Pr[i]-0.005);
+      const sid=ws.speciesId[i];
+      if(sid>=0) ws.Pl[i]=ws.c01(ws.Pl[i]+P.PL_BUILD*(ws.species[sid]?.dims[4]||0.3));
+      ws.Pl[i]=ws.c01(ws.Pl[i]-P.PL_DECAY);
+      // Hybrid (hash-based, no stream)
+      if(ws.T[i]>=0.65&&ws.Pr[i]>=0.55&&ws.Pl[i]>=0.55) {
+        const wIdx=Math.floor(ws.tick/(P.TICK_RATE*P.HYB_WINDOW_S));
+        if(RNG.hash32(RNG.getSeedHash(),i,wIdx)<Math.min(0.18,0.04+0.10*(ws.Pl[i]-0.55)+0.06*(ws.Pr[i]-0.55))) {
+          spawnHybrid(ws,i%P.W,Math.floor(i/P.W),i);
+        }
+      }
+    }
+  }
+
+  function spawnHybrid(ws,x,y,i) {
+    const sid=ws.speciesId[i]; if(sid<0) return;
+    const sp=ws.species[sid];
+    const dims=sp.dims.map((d,j)=>ws.c01(0.55*d+0.35*[ws.M[i],ws.N[i],ws.L[i],ws.T[i],ws.Pl[i]][j]+0.10*(RNG.hash32(ws.tick,i,j)-0.5)));
+    const color=sp.color.map(c=>Math.min(1,Math.max(0,c+(RNG.hash32(ws.tick,i,42)-0.5)*0.3)));
+    const sid2=ws.addSpecies({gattung:sp.gattung,dims,mode:sp.mode,color,essenzen:sp.essenzen,expand:0,birthTick:ws.tick,isHybrid:true});
+    if(sid2<0) return;
+    ws.speciesId[i]=sid2; ws.density[i]=0.18;
+    addFeed(STRINGS.feed_hybrid,'unlock');
+    EVENTS.push({type:'POP',x,y});
+    EVENTS.push({type:'OrbSpawn',orbKind:'discovery',x,y,amount:ORBS_SCHEMA.triggers.HybridSpawned.amount});
+    checkUnlock(ws,true);
+  }
+
+  // ── 5) Global Indices ──
+  function globalIndices(ws) {
+    let sumM=0,sumS=0,sumN=0,occ=0;
+    for (let i=0;i<P.W*P.H;i++) { sumM+=ws.M[i]; sumS+=ws.S[i]; sumN+=ws.N[i]; if(ws.speciesId[i]>=0) occ++; }
+    const n=P.W*P.H;
+    ws.K=ws.c01(0.5*(1-sumM/n)+0.5*(sumS/n));
+    const div=Math.min(1,ws.species.filter(Boolean).length/8);
+    ws.R=ws.c01(0.4*div+0.3*(sumN/n)+0.3*(1-sumS/n));
+    ws.Pg=ws.c01(0.5*(sumS/n)+0.5*(1-sumN/n));
+    // Stable state → Resonance orbs
+    if (ws.R>0.65&&ws.K<0.40&&occ>20) {
+      const cx=Math.floor(P.W/2+((RNG.hash32(ws.tick,1,2)-0.5)*P.W*0.4));
+      const cy=Math.floor(P.H/2+((RNG.hash32(ws.tick,3,4)-0.5)*P.H*0.4));
+      if(RNG.hash32(ws.tick,99,0)<0.15) EVENTS.push({type:'OrbSpawn',orbKind:'resonance',x:cx,y:cy,amount:1});
+    }
+    // Dormant + Extinction (M10)
+    if (ws.hasEverSpawned) {
+      if (occ===0) {
+        if (ws.dormantTimer===0) {
+          ws.dormantTimer=P.DORMANT_S*P.TICK_RATE;
+          ws.freeKeim=true;
+          EVENTS.push({type:'DormantStart'});
+          addFeed('Die Welt verstummt… Free Keim verfügbar.','warn');
+        }
+        if (ws.dormantTimer<=0) ws.extinctW++;
+        else ws.extinctW=0;
+      } else { ws.extinctW=0; ws.dormantTimer=0; EVENTS.push({type:'DormantEnd'}); }
+      if (ws.extinctW>=P.EXTINCT_S*P.TICK_RATE/P.GLOBAL_EVERY) {
+        ws.runState='ENDED_EXTINCT';
+        addFeed(STRINGS.feed_extinct,'warn');
+        EVENTS.push({type:'RunEnd',outcome:'extinct'});
+      }
+    }
+    // Unlock: Symbiose
+    if(!ws.unlocks.Symbiose) {
+      const frontN=Array.from(ws.isFront).filter(Boolean).length;
+      if(frontN>5&&ws.K<0.5) ws.coexistT++;
+      else ws.coexistT=Math.max(0,ws.coexistT-1);
+      if(ws.coexistT>=80){ws.unlocks.Symbiose=true;addFeed(STRINGS.unlock_symbiose,'unlock');EVENTS.push({type:'OrbSpawn',orbKind:'discovery',x:Math.floor(P.W/2),y:Math.floor(P.H/2),amount:1});}
+    }
+    if(!ws.unlocks.Dominanz) {
+      let hT=0; for(let i=0;i<P.W*P.H;i++) if(ws.T[i]>=0.65) hT++;
+      if(hT>3) ws.conflictT++; else ws.conflictT=Math.max(0,ws.conflictT-1);
+      if(ws.conflictT>=50){ws.unlocks.Dominanz=true;addFeed(STRINGS.unlock_dominanz,'unlock');EVENTS.push({type:'OrbSpawn',orbKind:'discovery',x:Math.floor(P.W/2),y:Math.floor(P.H/2),amount:1});}
+    }
+  }
+
+  function checkUnlock(ws,fromHybrid) {
+    if(!ws.unlocks.Iteration&&(fromHybrid||ws.species.length>1)){
+      ws.unlocks.Iteration=true;
+      addFeed(STRINGS.unlock_iteration,'unlock');
+      EVENTS.push({type:'OrbSpawn',orbKind:'discovery',x:ws.targetX>0?ws.targetX:Math.floor(P.W/2),y:ws.targetY>0?ws.targetY:Math.floor(P.H/2),amount:1});
+    }
+  }
+
+  // ── 6) Regime Window ──
+  function regimeWindow(ws) {
+    const mods=ws.mods;
+    if(ws.regime==='NORMAL') {
+      if(ws.K>P.K_TRIG&&ws.R<P.R_TRIG&&ws.Pg>P.P_TRIG) ws.desW++;
+      else ws.desW=Math.max(0,ws.desW-1);
+      if(ws.desW>=P.D_WINDOW_S*P.TICK_RATE/P.GLOBAL_EVERY) {
+        ws.regime='DESERT';
+        Object.assign(mods,{mEvap:1.8,mDiff:0.7,nRegen:0.55,sDecay:0.6,capMul:0.65});
+        addFeed(STRINGS.feed_desert,'warn');
+        EVENTS.push({type:'DesertStart'});
+      }
+    } else {
+      if(ws.K<P.K_REL&&ws.R>P.R_REL) ws.relW++;
+      else ws.relW=Math.max(0,ws.relW-1);
+      if(ws.relW>=P.D_WINDOW_S*P.TICK_RATE/P.GLOBAL_EVERY) {
+        ws.regime='NORMAL'; ws.mods={};
+        addFeed(STRINGS.feed_recovery,'event');
+      }
+    }
+  }
+
+  // ── 7) Emit Events ──
+  function emitEvents(ws) {
+    // Eden check
+    if(!ws._edenReported&&ws.K<=0.50&&ws.R>=0.70&&ws.Pg<=0.30) {
+      ws.edenW++;
+      if(ws.edenW>=P.EDEN_S*P.TICK_RATE) {
+        ws._edenReported=true; ws.runState='ENDED_EDEN';
+        addFeed(STRINGS.feed_eden,'eden');
+        EVENTS.push({type:'RunEnd',outcome:'eden'});
+      }
+    } else ws.edenW=Math.max(0,ws.edenW-1);
+  }
+
+  return { tick, updateFrontCache };
+})();
+
+/* ─────────────────────────────────────────────────
+   M06  TERRAIN TILE RENDERER  (V2: no flat color, tile variants)
+   Uses ImageData Pixelbuffer — no per-cell canvas state
+   ─────────────────────────────────────────────────*/
+const TERRAIN_RENDERER = (() => {
+  // Pre-bake 4×4 tile patterns per terrain (8 variants each)
+  // Pattern = array of 0/1 for detail pixel on/off
+  const PATTERNS = {
+    dirt:  [[0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0],[0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1],[0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0],[1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0]],
+    clay:  [[1,0,1,0,0,1,0,1,1,0,1,0,0,1,0,1],[0,1,0,0,1,0,1,0,0,1,0,0,1,0,1,0],[1,0,0,1,0,1,0,0,1,0,0,1,0,1,0,0],[0,0,1,0,1,0,0,1,0,0,1,0,1,0,0,1]],
+    sand:  [[1,1,0,0,1,1,0,0,0,0,1,1,0,0,1,1],[0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0],[1,0,1,0,0,1,0,1,0,0,1,0,1,0,1,0],[0,0,0,1,0,1,0,0,1,0,0,0,0,1,0,1]],
+    stone: [[1,0,1,0,0,0,0,1,1,0,0,0,0,1,0,1],[1,1,0,0,1,0,1,1,0,0,1,0,1,1,0,0],[0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0],[1,0,0,1,0,1,0,0,1,1,0,0,1,0,1,0]],
+    ore:   [[1,0,1,0,1,0,1,0,0,1,0,1,0,1,0,1],[0,0,1,0,0,1,0,0,0,0,1,0,0,1,0,0],[1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1],[0,1,0,1,0,0,0,1,1,0,0,0,1,0,1,0]],
+    rich:  [[0,1,0,0,1,0,0,1,0,0,0,0,1,0,0,0],[1,0,0,0,0,0,1,0,0,1,0,0,0,0,1,0],[0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,1],[0,0,0,1,0,0,1,0,1,0,0,0,0,1,0,0]],
+  };
+
+  function paint(px, i, ws, isDesert, timeMs) {
+    const tid = TERRAIN_IDS[ws.terrainId[i]];
+    const terra = TERRAIN_PALETTE[tid];
+    const [br,bg,bb] = terra.rgb;
+
+    // Choose pattern variant deterministically
+    const x=i%P.W, y=Math.floor(i/P.W);
+    const variantIdx = Math.floor(RNG.hash32(RNG.getSeedHash(),x,y)*4);
+    const pats = PATTERNS[tid] || PATTERNS.dirt;
+    const pat = pats[variantIdx];
+    const pix = pat[(y%4)*4+(x%4)];
+
+    // Detail intensity from variant
+    const detail = pix ? 0.12 : 0;
+
+    let r=br+detail, g=bg+detail*0.8, b=bb+detail*0.7;
+
+    // ── Layer overlays (spec 12, 18) ──
+    // Feuchte: dunkler + puddle pixels (V2)
+    const m=ws.M[i];
+    if (m>0.2) { r-=m*0.06; g-=m*0.04; b+=m*0.04; }
+    if (m>0.55&&pix) { b+=0.08; g+=0.04; } // puddle glint
+
+    // Licht: warm glow
+    const l=ws.L[i];
+    if(l>0.3){r+=l*0.09;g+=l*0.06;b+=l*0.01;}
+
+    // N low: matte/desaturate
+    if(ws.N[i]<0.2){const f=0.8+ws.N[i]; r*=f;g*=f;b*=f;}
+
+    // Stress: crack = dark detail + red edge
+    const sv=ws.S[i];
+    if(sv>0.3){r+=sv*0.05;g-=sv*0.04;b-=sv*0.05;if(pix&&sv>0.5){r+=0.12;g-=0.06;b-=0.06;}}
+
+    // Desert overlay: stronger cracks + shimmer
+    if(isDesert){
+      const shimmer=Math.sin(timeMs*0.004+x*0.18+y*0.22)*0.04;
+      r+=shimmer+0.06; g+=shimmer*0.3; b-=0.03;
+      if(pix){r+=0.08;g+=0.02;b-=0.04;}
+    }
+
+    px[i*4  ]=Math.min(255,Math.max(0,r*255));
+    px[i*4+1]=Math.min(255,Math.max(0,g*255));
+    px[i*4+2]=Math.min(255,Math.max(0,b*255));
+    px[i*4+3]=255;
+  }
+
+  return { paint };
+})();
+
+/* ─────────────────────────────────────────────────
+   M07  COLONY RENDERER  (density→stipple→solid, front pulse, jitter)
+   ─────────────────────────────────────────────────*/
+const COLONY_RENDERER = (() => {
+  function paint(px, i, ws, timeMs) {
+    const sid=ws.speciesId[i]; if(sid<0) return;
+    const sp=ws.species[sid]; if(!sp) return;
+    const x=i%P.W, y=Math.floor(i/P.W);
+    const cp=Math.max(0.05,P.CAP_BASE+ws.M[i]*P.CAP_M+ws.N[i]*P.CAP_N+ws.L[i]*P.CAP_L);
+    const dr=Math.min(1,ws.density[i]/cp);
+
+    // Stipple pattern for low density (gives organic look)
+    if(dr<0.4){
+      const stippleOk=RNG.hash32(sid,x*3+y,7)>0.5;
+      if(!stippleOk) return; // leave terrain visible through
+    }
+
+    let [r,g,b]=sp.color;
+    // Fade with density
+    const fade=ws.N[i]<0.1?0.5:1;
+    r*=dr*fade; g*=dr*fade; b*=dr*fade;
+
+    // Front pulse (Expand)
+    if(ws.isFront[i]) {
+      const e=sp.expand||0.4;
+      const pulse=0.18+e*0.22*Math.sin(timeMs*0.006+x*0.15+y*0.12);
+      r+=pulse*0.14; g+=pulse*0.14; b+=pulse*0.14;
+    }
+
+    // Conflict jitter ONLY on conflict front (T high)
+    if(ws.isFront[i]&&ws.T[i]>0.55) {
+      const j=(RNG.cos()-0.5)*ws.T[i]*0.25;
+      r+=j; g+=j*0.5;
+    }
+
+    // Hybrid: iridescent shift
+    if(sp.isHybrid){
+      const sh=Math.sin(timeMs*0.008+i)*0.12;
+      r+=sh*0.2; b+=sh*0.3; g-=sh*0.05;
+    }
+
+    px[i*4  ]=Math.min(255,Math.max(0,r*255));
+    px[i*4+1]=Math.min(255,Math.max(0,g*255));
+    px[i*4+2]=Math.min(255,Math.max(0,b*255));
+    px[i*4+3]=255;
+  }
+  return { paint };
+})();
+
+/* ─────────────────────────────────────────────────
+   M08  EFFECTS RENDERER  (ripple, pop rings, orb particles — capped)
+   ─────────────────────────────────────────────────*/
+const FX = (() => {
+  const ripples=[], pops=[], orbFX=[]; // capped arrays
+  const MAX_R=16, MAX_P=12, MAX_OFX=24;
+
+  function addRipple(x,y,col='rgba(56,232,204,'){
+    if(ripples.length>=MAX_R) ripples.shift(); // dropNewest would be: return, but ripples look good dropping oldest
+    ripples.push({x,y,r:0,alpha:1,col});
+  }
+  function addPop(x,y){
+    if(pops.length>=MAX_P) return; // dropNewest
+    pops.push({x,y,r:0,alpha:1});
+  }
+  function addOrbFX(x,y,col){
+    if(orbFX.length>=MAX_OFX) return;
+    orbFX.push({x,y,vx:(Math.random()-0.5)*1.2,vy:(Math.random()-0.5)*1.2-0.5,alpha:1,col});
+  }
+
+  function draw(ctx,scale,timeMs) {
+    ctx.save();
+    // Ripples
+    for(let i=ripples.length-1;i>=0;i--){
+      const r=ripples[i]; r.r+=2.5; r.alpha-=0.04;
+      if(r.alpha<=0){ripples.splice(i,1);continue;}
+      ctx.beginPath(); ctx.arc(r.x*scale,r.y*scale,r.r,0,Math.PI*2);
+      ctx.strokeStyle=r.col+r.alpha+')'; ctx.lineWidth=1.5; ctx.stroke();
+    }
+    // Pop rings
+    for(let i=pops.length-1;i>=0;i--){
+      const p=pops[i]; p.r+=3; p.alpha-=0.05;
+      if(p.alpha<=0){pops.splice(i,1);continue;}
+      ctx.beginPath(); ctx.arc(p.x*scale,p.y*scale,p.r,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(240,192,96,${p.alpha})`; ctx.lineWidth=2; ctx.stroke();
+    }
+    // Orb FX particles
+    for(let i=orbFX.length-1;i>=0;i--){
+      const o=orbFX[i]; o.x+=o.vx; o.y+=o.vy; o.vy+=0.04; o.alpha-=0.025;
+      if(o.alpha<=0){orbFX.splice(i,1);continue;}
+      ctx.beginPath(); ctx.arc(o.x*scale,o.y*scale,2,0,Math.PI*2);
+      ctx.fillStyle=o.col.replace(')',`,${o.alpha})`); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  return { addRipple, addPop, addOrbFX, draw };
+})();
+
+/* ─────────────────────────────────────────────────
+   M09  ORBS ENGINE  (spawn/collect/caps — no timer income)
+   Policy: overflow=dropNewest, collection=tap+radius
+   ─────────────────────────────────────────────────*/
+const ORBS = (() => {
+  let orbs=[]; // {id,kind,x,y,birthMs,value}
+  let collected={impulse:0,discovery:0,resonance:0};
+  let nextId=0;
+  const CAP=ORBS_SCHEMA.caps;
+
+  function spawn(kind,wx,wy,amount=1) {
+    const kDef=ORBS_SCHEMA.kinds[kind]; if(!kDef) return;
+    const sc=ORBS_SCHEMA.triggers; // scatter
+    for(let a=0;a<amount;a++){
+      if(orbs.length>=CAP.maxOnMap) return; // dropNewest (don't add)
+      const ox=wx+(Math.random()-0.5)*4, oy=wy+(Math.random()-0.5)*4;
+      orbs.push({id:nextId++,kind,x:ox,y:oy,birthMs:Date.now(),value:kDef.value});
+      FX.addOrbFX(ox,oy,`rgba(${Math.round(kDef.color[0]*255)},${Math.round(kDef.color[1]*255)},${Math.round(kDef.color[2]*255)},`);
+    }
+  }
+
+  function tick(now) {
+    // Expire by TTL
+    orbs=orbs.filter(o=>now-o.birthMs<ORBS_SCHEMA.kinds[o.kind].ttl);
+  }
+
+  function tryCollect(wx,wy,radius=3) {
+    let gained={impulse:0,discovery:0,resonance:0};
+    orbs=orbs.filter(o=>{
+      const d=Math.sqrt((o.x-wx)**2+(o.y-wy)**2);
+      if(d<=radius){gained[o.kind]=(gained[o.kind]||0)+o.value;return false;}
+      return true;
+    });
+    let total=0;
+    for(const k of ['impulse','discovery','resonance']){
+      if(gained[k]){collected[k]+=gained[k];total+=gained[k];}
+    }
+    if(total>0&&ws) ws.energy=Math.min(P.E_MAX, ws.energy+total);
+    return total;
+  }
+
+  function getOrbs() { return orbs; }
+  function getCounts() { return collected; }
+  function reset() { orbs=[]; collected={impulse:0,discovery:0,resonance:0}; nextId=0; }
+
+  return { spawn, tick, tryCollect, getOrbs, getCounts, reset };
+})();
+
+/* ─────────────────────────────────────────────────
+   M10  STABILITY PACKAGE  (firstSpawn gate, dormant, start-boost)
+   Implemented inline in SIM.tick — see ws.hasEverSpawned,
+   ws.dormantTimer, ws.startBoostRem, ws.freeKeim
+   ─────────────────────────────────────────────────*/
+// (logic is in M05 SIM, policy defined here as comments)
+// • Extinction/Fail only after hasEverSpawned=true
+// • Dormant window: 10s + 1 free Keim
+// • Start boost: first 30s after first spawn: stress *0.5, growth *1.25
+
+/* ─────────────────────────────────────────────────
+   M11  RUN GOALS  (Eden/Extinction/Desert — clean endings)
+   ─────────────────────────────────────────────────*/
+function showRunEnd(outcome) {
+  const ov=document.getElementById('overlay');
+  const elapsed=ws?Math.round((Date.now()-ws.startTs)/1000):0;
+  const mins=Math.floor(elapsed/60), secs=elapsed%60;
+  const occupied=ws?Array.from(ws.speciesId).filter(s=>s>=0).length:0;
+  const specCount=ws?ws.species.filter(Boolean).length:0;
+  let titleText, titleClass, desc;
+  if(outcome==='eden'){
+    titleText=STRINGS.ended_eden; titleClass='ov-outcome-good';
+    desc='Die Welt hat Gleichgewicht gefunden. Alle Kräfte in Balance.';
+  } else if(outcome==='extinct'){
+    titleText=STRINGS.ended_extinct; titleClass='ov-outcome-bad';
+    desc='Keine Kolonie überlebte. Die Stille ist vollständig.';
+  } else {
+    titleText=STRINGS.ended_desert; titleClass='ov-outcome-bad';
+    desc='Die Hitze siegte. Nur Staub bleibt zurück.';
+  }
+  ov.innerHTML=`
+    <div class="ov-title ${titleClass}">${titleText}</div>
+    <div class="ov-sub">${desc}</div>
+    <div class="ov-stat-row">
+      <div class="ov-stat"><div class="ov-stat-val">${mins}:${String(secs).padStart(2,'0')}</div><div class="ov-stat-label">Laufzeit</div></div>
+      <div class="ov-stat"><div class="ov-stat-val">${specCount}</div><div class="ov-stat-label">Spezies</div></div>
+      <div class="ov-stat"><div class="ov-stat-val">${ORBS.getCounts().discovery}</div><div class="ov-stat-label">Entdeckungen</div></div>
+    </div>
+    <div class="ov-seed-row">
+      <input class="ov-seed-input" id="seed-input" type="text" value="${document.getElementById('seed-input')?.value||'formenwetter'}" placeholder="Seed…"/>
+      <button class="ov-btn" onclick="startGame()">NEU STARTEN</button>
+    </div>
+  `;
+  ov.style.display='flex';
+}
+
+/* ─────────────────────────────────────────────────
+   M12  MICRO GOALS  (run-internal nudges, no quest structure)
+   ─────────────────────────────────────────────────*/
+const MICRO_GOALS = [
+  { textKey:'Erste Flora wachsen lassen', cond:ws=>ws&&ws.species.some(s=>s&&s.gattung==='Flora') },
+  { textKey:'Feuchte über 30% halten', cond:ws=>{let s=0;for(let i=0;i<P.W*P.H;i++) s+=ws.M[i];return s/(P.W*P.H)>0.30;} },
+  { textKey:'Hybrid-Spezies entstehen lassen', cond:ws=>ws&&ws.species.some(s=>s&&s.isHybrid) },
+  { textKey:'Klimastress unter 0.50 halten', cond:ws=>ws&&ws.K<0.50 },
+  { textKey:'Zwei Gattungen koexistieren', cond:ws=>ws&&new Set(ws.species.filter(Boolean).map(s=>s.gattung)).size>=2 },
+  { textKey:'Resilienz über 0.60 bringen', cond:ws=>ws&&ws.R>0.60 },
+  { textKey:'Desertifizierung abwenden', cond:ws=>ws&&ws._hadDesert&&ws.regime==='NORMAL' },
+];
+let currentGoalIdx=0, goalCheckTimer=0;
+function updateMicroGoal() {
+  if(!ws) return;
+  goalCheckTimer++;
+  if(goalCheckTimer<P.TICK_RATE*10) return;
+  goalCheckTimer=0;
+  const goal=MICRO_GOALS[currentGoalIdx];
+  if(goal&&goal.cond(ws)) {
+    currentGoalIdx=(currentGoalIdx+1)%MICRO_GOALS.length;
+  }
+  const el=document.getElementById('micro-goal');
+  if(el&&goal) el.textContent='Ziel: '+MICRO_GOALS[currentGoalIdx].textKey;
+}
+
+/* ─────────────────────────────────────────────────
+   M13  UI CONTROLLER  (target, cost preview, states, mobile)
+   ─────────────────────────────────────────────────*/
+let ws=null, gameRunning=false;
+let selectedEssenzen=[], targetX=-1, targetY=-1;
+let gestCDs={};
+let simInterval=null, renderRAF=null;
+let speedMul=1, isPaused=false;
+let canvasEl=null;
+const EVENTS=[]; // bounded event bus
+
+// Cached offscreen canvas for pixel buffer (no per-frame alloc)
+let offCanvas=null, offCtx=null, imgData=null, px=null;
+
+const G = {
+  togglePause(){
+    isPaused=!isPaused;
+    document.getElementById('btn-pause').textContent=isPaused?'▶':'⏸';
+    document.getElementById('btn-pause').classList.toggle('active',isPaused);
+  },
+  setSpeed(s){
+    speedMul=s;
+    if(gameRunning) { clearInterval(simInterval); startSimLoop(); }
+    document.getElementById('btn-1x').classList.toggle('active',s===1);
+    document.getElementById('btn-3x').classList.toggle('active',s===3);
+  },
+  reset(){ stopLoops(); ws=null; gameRunning=false; selectedEssenzen=[]; targetX=-1; targetY=-1; ORBS.reset(); gestCDs={};
+    document.getElementById('overlay').innerHTML=`
+      <div class="ov-title">FORMENWETTER</div>
+      <div class="ov-sub">Forme eine Welt aus dem Nichts. Verbinde Essenzen, lenke Kolonien, verhindere die Verwüstung.</div>
+      <div class="ov-seed-row">
+        <input class="ov-seed-input" id="seed-input" type="text" value="formenwetter" placeholder="Seed…"/>
+        <button class="ov-btn" onclick="startGame()">STARTEN</button>
+      </div>`;
+    document.getElementById('overlay').style.display='flex';
+    document.getElementById('feed').innerHTML='';
+    document.getElementById('target-marker').style.display='none';
+    buildPalette(); buildGestures(); updatePalette(); updateGestures(); updateApplyBtn();
+  },
+  applyRitual(){
+    if(!ws||!gameRunning) return;
+    const mode=document.getElementById('mode-select').value;
+    if(targetX<0||targetY<0){ showToast(STRINGS.toast_no_target); return; }
+    if(mode==='Fusion'&&selectedEssenzen.length<2){ showToast(STRINGS.toast_no_essenzen); return; }
+    if(!ws.unlocks[mode]){ showToast(STRINGS.toast_no_unlock); return; }
+    const cost=ritualCost(mode);
+    if(ws.energy<cost){ showToast(STRINGS.toast_no_energy); return; }
+    const gc=gestCDs[mode]; if(gc&&Date.now()<gc.until){ return; }
+    ws.energy-=cost;
+    ws.pushAction({type:mode,x:targetX,y:targetY,essenzen:[...selectedEssenzen]});
+    const cdMs={'Fusion':P.CD_FUSION,'Symbiose':P.CD_SYM,'Dominanz':P.CD_DOM,'Iteration':P.CD_ITER}[mode]||2000;
+    gestCDs[mode]={until:Date.now()+cdMs,maxCd:cdMs};
+    updateApplyBtn();
+  },
+  copySeed(){
+    const v=document.getElementById('seed-input')?.value||'formenwetter';
+    navigator.clipboard?.writeText(v).then(()=>showToast('Seed kopiert!'));
+  },
+};
+
+function ritualCost(mode){
+  return P.COST_BASE+(mode==='Dominanz'?P.COST_DOM:0)+(mode==='Iteration'?P.COST_ITER:0);
+}
+
+/* ── Canvas / World Init ── */
+function startGame() {
+  const seed=document.getElementById('seed-input')?.value||'formenwetter';
+  RNG.init(seed);
+  ws=new WorldState();
+  ORBS.reset();
+  EVENTS.length=0;
+  selectedEssenzen=[]; targetX=-1; targetY=-1;
+  currentGoalIdx=0; goalCheckTimer=0;
+  generateWorld(ws);
+  gameRunning=true;
+  // Init offscreen canvas (M06 perf: no per-frame alloc)
+  offCanvas=document.createElement('canvas'); offCanvas.width=P.W; offCanvas.height=P.H;
+  offCtx=offCanvas.getContext('2d'); imgData=new ImageData(P.W,P.H); px=imgData.data;
+  // Size display canvas
+  const wrap=document.getElementById('canvas-wrap');
+  const maxW=wrap.clientWidth||600, maxH=wrap.clientHeight||400;
+  const scale=Math.max(1,Math.min(4,Math.min(Math.floor(maxW/P.W),Math.floor(maxH/P.H))));
+  canvasEl.width=P.W*scale; canvasEl.height=P.H*scale; canvasEl._scale=scale;
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('target-marker').style.display='none';
+  addFeed(STRINGS.feed_start,'event');
+  buildPalette(); buildGestures(); updatePalette(); updateGestures(); updateApplyBtn();
+  stopLoops();
+  startSimLoop();
+  requestAnimationFrame(renderLoop);
+}
+
+function stopLoops(){ clearInterval(simInterval); cancelAnimationFrame(renderRAF); gameRunning=false; }
+
+function startSimLoop(){
+  simInterval=setInterval(()=>{
+    if(!isPaused&&ws&&gameRunning){
+      SIM.tick(ws);
+      ORBS.tick(Date.now());
+      processEvents();
+      updateMicroGoal();
+      updateUI();
+    }
+  },1000/(P.TICK_RATE*speedMul));
+}
+
+/* ── Main Render Loop ── */
+function renderLoop(timeMs) {
+  renderRAF=requestAnimationFrame(renderLoop);
+  if(!ws||!gameRunning||!canvasEl) return;
+  const isDesert=ws.regime==='DESERT';
+  // Paint terrain base + layers
+  for(let i=0;i<P.W*P.H;i++) TERRAIN_RENDERER.paint(px,i,ws,isDesert,timeMs);
+  // Paint colonies on top
+  for(let i=0;i<P.W*P.H;i++) COLONY_RENDERER.paint(px,i,ws,timeMs);
+  // Draw orb dots directly into pixel buffer
+  for(const o of ORBS.getOrbs()) {
+    const k=ORBS_SCHEMA.kinds[o.kind];
+    const ox=Math.floor(o.x),oy=Math.floor(o.y);
+    if(ox<0||ox>=P.W||oy<0||oy>=P.H) continue;
+    for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+      const ii=ws.idx(((ox+dx+P.W)%P.W),((oy+dy+P.H)%P.H));
+      const glow=dx===0&&dy===0?1:0.45;
+      px[ii*4  ]=Math.min(255,px[ii*4  ]+Math.round(k.color[0]*255*glow));
+      px[ii*4+1]=Math.min(255,px[ii*4+1]+Math.round(k.color[1]*255*glow));
+      px[ii*4+2]=Math.min(255,px[ii*4+2]+Math.round(k.color[2]*255*glow));
+    }
+  }
+  // Flush to offscreen then scale
+  offCtx.putImageData(imgData,0,0);
+  const ctx=canvasEl.getContext('2d');
+  ctx.imageSmoothingEnabled=false;
+  const s=canvasEl._scale||2;
+  ctx.drawImage(offCanvas,0,0,P.W*s,P.H*s);
+  // Effects (ripple/pop/orbfx — drawn on canvas, not pixel buffer)
+  FX.draw(ctx,s,timeMs);
+}
+
+/* ── Event Processor ── */
+function processEvents() {
+  while(EVENTS.length>0) {
+    const ev=EVENTS.shift();
+    if(ev.type==='OrbSpawn') ORBS.spawn(ev.orbKind,ev.x,ev.y,ev.amount);
+    if(ev.type==='RippleAt') FX.addRipple(ev.x,ev.y,ev.col?ev.col.replace('#','rgba(').replace(/(.{2})(.{2})(.{2})/,(_,r,g,b)=>`rgba(${parseInt(r,16)},${parseInt(g,16)},${parseInt(b,16)},`):'rgba(56,232,204,');
+    if(ev.type==='POP') FX.addPop(ev.x,ev.y);
+    if(ev.type==='Toast') showToast(ev.msg);
+    if(ev.type==='DormantStart') document.getElementById('dormant-banner').style.display='block';
+    if(ev.type==='DormantEnd') document.getElementById('dormant-banner').style.display='none';
+    if(ev.type==='DesertStart') ws&&(ws._hadDesert=true);
+    if(ev.type==='RunEnd') { showRunEnd(ev.outcome); gameRunning=false; stopLoops(); }
+  }
+}
+
+/* ── UI Updates ── */
+function updateUI() {
+  if(!ws) return;
+  setFill('K',ws.K); setFill('R',ws.R); setFill('P',ws.Pg);
+  const badge=document.getElementById('regime-badge');
+  badge.textContent=ws.regime==='DESERT'?STRINGS.regime_desert:ws.runState==='ENDED_EDEN'?STRINGS.regime_eden:STRINGS.regime_normal;
+  badge.className=ws.regime==='DESERT'?'desert':ws.runState==='ENDED_EDEN'?'eden':'';
+  document.getElementById('energy-val').textContent=Math.floor(ws.energy);
+  document.getElementById('energy-bar').style.width=(ws.energy/P.E_MAX*100)+'%';
+  const elapsed=Math.round((Date.now()-ws.startTs)/1000);
+  document.getElementById('tick-info').textContent=`T${ws.tick} | ${ws.species.filter(Boolean).length}sp | ${Math.floor(elapsed/60)}:${String(elapsed%60).padStart(2,'0')}`;
+  const run=document.getElementById('run-timer');
+  if(run) run.textContent=`${Math.floor(elapsed/60)}:${String(elapsed%60).padStart(2,'0')}`;
+  // Orbs
+  const c=ORBS.getCounts();
+  document.getElementById('orb-i').textContent=c.impulse;
+  document.getElementById('orb-d').textContent=c.discovery;
+  document.getElementById('orb-r').textContent=c.resonance;
+  // Dormant timer
+  if(ws.dormantTimer>0) {
+    const ds=Math.ceil(ws.dormantTimer/P.TICK_RATE);
+    document.getElementById('dormant-timer').textContent=`${ds}s … dann freier Keim`;
+  }
+  // Apply btn
+  updateApplyBtn();
+  updatePalette();
+  updateModeSelect();
+}
+
+function setFill(key,val) {
+  const f=document.getElementById('fill-'+key); if(!f) return;
+  f.style.width=(val*100).toFixed(0)+'%';
+}
+
+function updateApplyBtn() {
+  const mode=document.getElementById('mode-select').value;
+  const btn=document.getElementById('apply-btn');
+  const costEl=document.getElementById('apply-cost');
+  const cost=ritualCost(mode);
+  const unlocked=ws?ws.unlocks[mode]:mode==='Fusion';
+  const hasEnergy=ws?ws.energy>=cost:false;
+  const hasTarget=targetX>=0;
+  const needsEss=mode==='Fusion'&&selectedEssenzen.length<2;
+  const gc=gestCDs[mode];
+  const onCd=gc&&Date.now()<gc.until;
+  const ok=gameRunning&&unlocked&&hasEnergy&&hasTarget&&!needsEss&&!onCd;
+  btn.disabled=!ok;
+  if(!unlocked) costEl.textContent='gesperrt';
+  else if(!hasTarget) costEl.textContent='tap: target setzen';
+  else if(needsEss) costEl.textContent='2 Essenzen wählen';
+  else if(!hasEnergy) costEl.textContent=`braucht ${cost} ⚡`;
+  else if(onCd) { const rem=Math.ceil((gc.until-Date.now())/1000); costEl.textContent=`CD: ${rem}s`; }
+  else costEl.textContent=`Anwenden (−${cost} ⚡)`;
+}
+
+function updateModeSelect() {
+  if(!ws) return;
+  const sel=document.getElementById('mode-select');
+  for(let o of sel.options) {
+    const id=o.value; o.disabled=!ws.unlocks[id];
+  }
+}
+
+/* ── PALETTE ── */
+function buildPalette() {
+  const pal=document.getElementById('palette'); pal.innerHTML='';
+  ESSENZEN.forEach(ess=>{
+    const btn=document.createElement('button');
+    btn.className='ess-btn'; btn.dataset.id=ess.id;
+    btn.innerHTML=`<span class="ess-sym" style="color:${ess.col}">${ess.sym}</span><span>${ess.id}</span>`;
+    btn.addEventListener('pointerdown',e=>{e.preventDefault();selectEssenz(ess.id);});
+    pal.appendChild(btn);
+  });
+}
+
+function updatePalette() {
+  document.querySelectorAll('.ess-btn').forEach(btn=>{
+    const id=btn.dataset.id;
+    btn.classList.toggle('selected',selectedEssenzen.includes(id));
+    btn.classList.toggle('locked',!isEssenzAvail(id));
+  });
+  const sA=document.getElementById('slot-A'), sB=document.getElementById('slot-B');
+  const essA=ESSENZEN.find(e=>e.id===selectedEssenzen[0]), essB=ESSENZEN.find(e=>e.id===selectedEssenzen[1]);
+  sA.textContent=essA?`${essA.sym} ${essA.id}`:'A —'; sA.classList.toggle('filled',!!essA);
+  sB.textContent=essB?`${essB.sym} ${essB.id}`:'B —'; sB.classList.toggle('filled',!!essB);
+  updateApplyBtn();
+}
+
+function isEssenzAvail(id) {
+  if(!ws) return id==='Atem'||id==='Frost';
+  if(id==='Atem'||id==='Frost') return true;
+  if(id==='Keim'){for(let i=0;i<P.W*P.H;i++) if(ws.M[i]>0.12) return true; return false;}
+  if(ws.species.length>0||ws.tick>8) return true;
+  if(id==='Feuchte'&&ws.tick>5) return true;
+  return false;
+}
+
+function selectEssenz(id) {
+  if(!isEssenzAvail(id)) return;
+  const idx=selectedEssenzen.indexOf(id);
+  if(idx>=0) selectedEssenzen.splice(idx,1);
+  else if(selectedEssenzen.length<2) selectedEssenzen.push(id);
+  else { selectedEssenzen.shift(); selectedEssenzen.push(id); }
+  updatePalette();
+}
+
+/* ── GESTURES (as supplementary UI) ── */
+function buildGestures() {} // gestures now integrated into mode-select + apply
+
+/* ── INPUT (tap/click for target) ── */
+function initInput(canvas) {
+  const handler = e => {
+    e.preventDefault();
+    const rect=canvas.getBoundingClientRect();
+    const clientX=e.clientX||(e.touches&&e.touches[0]?.clientX)||0;
+    const clientY=e.clientY||(e.touches&&e.touches[0]?.clientY)||0;
+    const scale=canvas._scale||2;
+    const wx=Math.floor((clientX-rect.left)/scale);
+    const wy=Math.floor((clientY-rect.top)/scale);
+    if(wx<0||wx>=P.W||wy<0||wy>=P.H) return;
+    // Try collect orbs first
+    if(ws&&gameRunning) {
+      const gain=ORBS.tryCollect(wx,wy,3);
+      if(gain>0) { showToast(`+${gain} ⚡`); updateApplyBtn(); return; }
+    }
+    // Set target
+    targetX=wx; targetY=wy;
+    if(ws) { ws.targetX=wx; ws.targetY=wy; }
+    const m=document.getElementById('target-marker');
+    m.style.display='block';
+    m.style.left=`${(wx+0.5)*scale}px`; m.style.top=`${(wy+0.5)*scale}px`;
+    updateApplyBtn();
+  };
+  canvas.addEventListener('pointerdown',handler,{passive:false});
+}
+
+/* ── TOOLTIP ── */
+function initTooltips() {
+  const tip=document.getElementById('tooltip');
+  document.querySelectorAll('[data-tip]').forEach(el=>{
+    el.addEventListener('mouseenter',e=>{
+      tip.textContent=el.dataset.tip; tip.style.display='block';
+      tip.style.left=(e.clientX+12)+'px'; tip.style.top=(e.clientY+8)+'px';
+    });
+    el.addEventListener('mousemove',e=>{
+      tip.style.left=(e.clientX+12)+'px'; tip.style.top=(e.clientY+8)+'px';
+    });
+    el.addEventListener('mouseleave',()=>tip.style.display='none');
+  });
+}
+
+/* ── FEED ── */
+function addFeed(text,type='normal'){
+  const feed=document.getElementById('feed'); if(!feed) return;
+  const el=document.createElement('div');
+  el.className='feed-msg '+type; el.textContent=text;
+  feed.prepend(el);
+  while(feed.children.length>40) feed.removeChild(feed.lastChild);
+}
+
+/* ── TOAST ── */
+let toastTimer=null;
+function showToast(msg) {
+  const t=document.getElementById('toast'); if(!t) return;
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+/* ── GESTURES (keyboard shortcuts for power users) ── */
+document.addEventListener('keydown',e=>{
+  if(!ws||!gameRunning) return;
+  if(e.key==='f'||e.key==='F') document.getElementById('mode-select').value='Fusion';
+  if(e.key==='s'||e.key==='S') { if(ws.unlocks.Symbiose) document.getElementById('mode-select').value='Symbiose'; }
+  if(e.key==='d'||e.key==='D') { if(ws.unlocks.Dominanz) document.getElementById('mode-select').value='Dominanz'; }
+  if(e.key==='i'||e.key==='I') { if(ws.unlocks.Iteration) document.getElementById('mode-select').value='Iteration'; }
+  if(e.key==='Enter') G.applyRitual();
+  if(e.key==' ') { e.preventDefault(); G.togglePause(); }
+  updateApplyBtn();
+});
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded',()=>{
+  canvasEl=document.getElementById('world');
+  initInput(canvasEl);
+  initTooltips();
+  buildPalette();
+  updatePalette();
+  updateApplyBtn();
+  document.getElementById('mode-select').addEventListener('change',updateApplyBtn);
+});
+</script>
+</body>
+</html>
